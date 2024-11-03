@@ -77,8 +77,21 @@ class LedvanceOrbis(LightEntity):
         return self._brightness
     
     @property
-    def color_temp(self):
+    def color_temp_kelvin(self):
         return self._color_temp
+
+    @property
+    def min_color_temp_kelvin(self):
+        return 2700
+
+    @property
+    def max_color_temp_kelvin(self):
+        return 6500
+    
+    def _kelvin_to_dps(kelvin):
+        kelvin = max(2700, min(kelvin, 6500))
+        dps = 1 + (kelvin - 2700) * (1000 - 1) / (6500 - 2700)
+        return int(dps)
 
     async def async_turn_on(self, **kwargs):
         """Turn on the light."""
@@ -91,7 +104,7 @@ class LedvanceOrbis(LightEntity):
                 self._device.set_multiple_values({
                     '20': True,
                     '22': int(self._brightness * (1000 / 255)),
-                    '23': int(1000 - (self._color_temp - 2700) * 1000 / 3800)
+                    '23': self._kelvin_to_dps(self._color_temp)
                 })
                 return True
             except Exception as e:
