@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from tinytuya import BulbDevice
 
-from .const import CONF_DEVICE_ID, CONF_IP_ADDRESS, CONF_LOCAL_KEY, DOMAIN
+from .const import CONF_IP_ADDRESS, CONF_DEVICE_ID, CONF_LOCAL_KEY, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 

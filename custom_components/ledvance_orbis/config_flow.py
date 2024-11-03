@@ -1,9 +1,7 @@
 from homeassistant import config_entries
-from homeassistant.const import CONF_DEVICE_ID, CONF_IP_ADDRESS, CONF_LOCAL_KEY
 from homeassistant.data_entry_flow import FlowResult
 import voluptuous as vol
-
-from .const import DOMAIN
+from .const import CONF_IP_ADDRESS, CONF_DEVICE_ID, CONF_LOCAL_KEY, DOMAIN
 
 class LedvanceOrbisConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
