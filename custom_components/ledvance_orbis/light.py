@@ -39,7 +39,9 @@ class LedvanceOrbis(LightEntity):
         self._device_ip = device_ip
         self._local_key = local_key
         
-        self._states = {'20': False, '22': 1000, '23': 1000}
+        self._is_on = False
+        self._brightness = 1000
+        self._color_temp = 1000
 
         self._lower_brightness = 29
         self._upper_brightness = 1000
@@ -80,20 +82,14 @@ class LedvanceOrbis(LightEntity):
 
     @property
     def is_on(self):
-        if self._states['20'] == True:
-            return True
-        return False
+        return self._is_on
 
     def brightness(self):
-        if self._states['22'] > 0:
-            return map_range(self._states['22'], self._lower_brightness, self._upper_brightness, 0, 255)
-        return None
+        return map_range(self._brightness, self._lower_brightness, self._upper_brightness, 0, 255)
     
     @property
     def color_temp(self):
-        if self._states['23'] > 0:
-            return int(self._max_mired - (((self._max_mired - self._min_mired) / self._upper_color_temp) * self._states['23']))
-        return None
+        return int(self._max_mired - (((self._max_mired - self._min_mired) / self._upper_color_temp) * self._color_temp))
 
     @property
     def min_mireds(self):
@@ -104,22 +100,54 @@ class LedvanceOrbis(LightEntity):
         return self._max_mired
 
     async def async_turn_on(self, **kwargs):
-        self._states['20'] = True
-        if ATTR_BRIGHTNESS in kwargs:
-            self._states['22'] = kwargs[ATTR_BRIGHTNESS]
-        else:
-            self._states['22'] = 1000
-        if ATTR_COLOR_TEMP in kwargs:
-            mired = int(kwargs[ATTR_COLOR_TEMP])
-            if mired < self._min_mired:
-                mired = self._min_mired
-            elif mired > self._max_mired:
-                mired = self._max_mired
-            self._states['23'] = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
-        else:
-            self._states['23'] = 1000
-        self._device.set_multiple_values(self._states)
+        states = {'20': True}
+        def turn_on():
+            try:
+                if ATTR_BRIGHTNESS in kwargs:
+                    states['22'] = kwargs[ATTR_BRIGHTNESS]
+                else:
+                    states['22'] = 1000
+                if ATTR_COLOR_TEMP in kwargs:
+                    mired = int(kwargs[ATTR_COLOR_TEMP])
+                    if mired < self._min_mired:
+                        mired = self._min_mired
+                    elif mired > self._max_mired:
+                        mired = self._max_mired
+                    states['23'] = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
+                else:
+                    states['23'] = 1000
+                self._device.set_multiple_values(states)
+                return True
+            except Exception as e:
+                return False
+            
+        success = await self.hass.async_add_executor_job(turn_on)
+        if success:
+            self._is_on = states['20']
+            self._brightness = states['22']
+            self._color_temp = states['23']
+            self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
-        self._states['20'] = False
-        self._device.set_multiple_values(self._states)
+            def turn_off():
+                try:
+                    self._device.set_multiple_values({'20': False})
+                    return True
+                except Exception as e:
+                    return False
+
+            success = await self.hass.async_add_executor_job(turn_off)
+            if success:
+                self._is_on = False
+                self.async_write_ha_state()
+
+    async def async_update(self):
+            def get_status():
+                try:
+                    return self._device.status()
+                except Exception:
+                    return None
+
+            status = await self.hass.async_add_executor_job(get_status)
+            if status is not None:
+                self._is_on = status.get('dps', {}).get('20', False)
