@@ -62,7 +62,9 @@ class LedvanceOrbis(LightEntity):
         """Turn on the light."""
         def turn_on():
             try:
-                self._device.turn_on()
+                self._device.set_multiple_values({
+                    '20': True
+                })
                 return True
             except Exception as e:
                 return False
@@ -76,7 +78,9 @@ class LedvanceOrbis(LightEntity):
         """Turn off the light."""
         def turn_off():
             try:
-                self._device.turn_off()
+                self._device.set_multiple_values({
+                    '20': False
+                })
                 return True
             except Exception as e:
                 return False
@@ -96,4 +100,4 @@ class LedvanceOrbis(LightEntity):
 
         status = await self.hass.async_add_executor_job(get_status)
         if status is not None:
-            self._is_on = status.get('dps', {}).get('1', False)
+            self._is_on = status.get('dps', {}).get('20', False)
