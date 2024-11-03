@@ -28,6 +28,10 @@ async def async_setup_entry(
     await light.async_init()
     async_add_entities([light])
 
+def map_range(value, from_lower, from_upper, to_lower, to_upper):
+    mapped = (value - from_lower) * (to_upper - to_lower) / (from_upper - from_lower) + to_lower
+    return round(min(max(mapped, to_lower), to_upper))
+
 class LedvanceOrbis(LightEntity):
     def __init__(self, hass, device_id, device_ip, local_key):
         self.hass = hass
@@ -35,8 +39,10 @@ class LedvanceOrbis(LightEntity):
         self._device_ip = device_ip
         self._local_key = local_key
         
-        self._states = {}
+        self._states = {'20': False, '22': 1000, '23': 1000}
 
+        self._lower_brightness = 29
+        self._upper_brightness = 1000
         self._upper_color_temp = 1000
         self._max_mired = color_util.color_temperature_kelvin_to_mired(2700)
         self._min_mired = color_util.color_temperature_kelvin_to_mired(6500)
@@ -77,11 +83,10 @@ class LedvanceOrbis(LightEntity):
         if self._states['20'] == True:
             return True
         return False
-    
-    @property
+
     def brightness(self):
         if self._states['22'] > 0:
-            return self._states['22']
+            return map_range(self._states['22'], self._lower_brightness, self._upper_brightness, 0, 255)
         return None
     
     @property
