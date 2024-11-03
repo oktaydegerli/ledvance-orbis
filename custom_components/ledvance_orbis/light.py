@@ -1,95 +1,103 @@
-import logging
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP,
-    ATTR_HS_COLOR,
-    COLOR_MODE_COLOR_TEMP,
-    COLOR_MODE_HS,
-    LightEntity,
-)
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.light import LightEntity
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from tinytuya import BulbDevice
-
-from .const import CONF_IP_ADDRESS, CONF_DEVICE_ID, CONF_LOCAL_KEY, DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
+import tinytuya
+from functools import partial
+import asyncio
 
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    config = hass.data[DOMAIN][config_entry.entry_id]
-    device = BulbDevice(
-        config[CONF_DEVICE_ID],
-        config[CONF_IP_ADDRESS],
-        config[CONF_LOCAL_KEY],
-    )
-    async_add_entities([LedvanceOrbisLight(device)])
+    device_id = config_entry.data["device_id"]
+    device_ip = config_entry.data["device_ip"]
+    local_key = config_entry.data["local_key"]
+    
+    light = LedvanceOrbis(hass, device_id, device_ip, local_key)
+    await light.async_init()
+    async_add_entities([light])
 
-class LedvanceOrbisLight(LightEntity):
-    def __init__(self, device):
-        self._device = device
-        self._name = device.name
-        self._state = None
-        self._brightness = None
-        self._color_temp = None
-        self._hs_color = None
+class LedvanceOrbis(LightEntity):
+    def __init__(self, hass, device_id, device_ip, local_key):
+        self.hass = hass
+        self._device_id = device_id
+        self._device_ip = device_ip
+        self._local_key = local_key
+        self._is_on = False
+        self._name = "Ledvance Orbis"
+        self._unique_id = f"ledvance_orbis_{device_id}"
+        self._device = None
+
+    async def async_init(self):
+        """Initialize the device asynchronously."""
+        def init_device():
+            device = tinytuya.BulbDevice(
+                dev_id=self._device_id,
+                address=self._device_ip,
+                local_key=self._local_key,
+                version=3.3
+            )
+            return device
+
+        self._device = await self.hass.async_add_executor_job(init_device)
 
     @property
     def name(self):
+        """Return the display name of this light."""
         return self._name
 
     @property
+    def unique_id(self):
+        """Return the unique ID of this light."""
+        return self._unique_id
+
+    @property
     def is_on(self):
-        return self._state
-
-    @property
-    def brightness(self):
-        return self._brightness
-
-    @property
-    def color_temp(self):
-        return self._color_temp
-
-    @property
-    def hs_color(self):
-        return self._hs_color
-
-    @property
-    def supported_color_modes(self):
-        return {COLOR_MODE_COLOR_TEMP, COLOR_MODE_HS}
-
-    @property
-    def color_mode(self):
-        if self._device.status()[21] == "white":
-            return COLOR_MODE_COLOR_TEMP
-        else:
-            return COLOR_MODE_HS
+        """Return true if light is on."""
+        return self._is_on
 
     async def async_turn_on(self, **kwargs):
-        if ATTR_BRIGHTNESS in kwargs:
-            self._brightness = kwargs[ATTR_BRIGHTNESS]
-            await self._device.set_brightness(int(self._brightness * 10.23))
+        """Turn on the light."""
+        def turn_on():
+            try:
+                self._device.set_multiple_values({
+                    '20': True
+                })
+                return True
+            except Exception as e:
+                return False
 
-        if ATTR_COLOR_TEMP in kwargs:
-            self._color_temp = kwargs[ATTR_COLOR_TEMP]
-            await self._device.set_color_temp(int(self._color_temp))
-
-        if ATTR_HS_COLOR in kwargs:
-            self._hs_color = kwargs[ATTR_HS_COLOR]
-            await self._device.set_colour(self._hs_color[0], self._hs_color[1])
-
-        await self._device.turn_on()
+        success = await self.hass.async_add_executor_job(turn_on)
+        if success:
+            self._is_on = True
+            self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
-        await self._device.turn_off()
+        """Turn off the light."""
+        def turn_off():
+            try:
+                self._device.set_multiple_values({
+                    '20': False
+                })
+                return True
+            except Exception as e:
+                return False
+
+        success = await self.hass.async_add_executor_job(turn_off)
+        if success:
+            self._is_on = False
+            self.async_write_ha_state()
 
     async def async_update(self):
-        status = self._device.status()
-        self._state = status[20]
-        self._brightness = int(status[22] / 10.23)
-        self._color_temp = status[23]
-        self._hs_color = self._device.colour()
+        """Fetch new state data for this light."""
+        def get_status():
+            try:
+                return self._device.status()
+            except Exception:
+                return None
+
+        status = await self.hass.async_add_executor_job(get_status)
+        if status is not None:
+            self._is_on = status.get('dps', {}).get('20', False)
