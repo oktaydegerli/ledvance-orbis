@@ -1,6 +1,8 @@
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP,
     SUPPORT_BRIGHTNESS,
+    SUPPORT_COLOR_TEMP,
     LightEntity,
 )
 
@@ -33,6 +35,7 @@ class LedvanceOrbis(LightEntity):
         self._local_key = local_key
         self._is_on = False
         self._brightness = 0
+        self._color_temp = 1
         self._name = "Ledvance Orbis"
         self._unique_id = f"ledvance_orbis_{device_id}"
         self._device = None
@@ -62,7 +65,7 @@ class LedvanceOrbis(LightEntity):
 
     @property
     def supported_features(self):
-        return SUPPORT_BRIGHTNESS
+        return SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP
 
     @property
     def is_on(self):
@@ -72,16 +75,31 @@ class LedvanceOrbis(LightEntity):
     @property
     def brightness(self):
         return self._brightness
+    
+    @property
+    def color_temp(self):
+        return self._color_temp
+
+    @property
+    def min_mireds(self):
+        return 153  # 6500K
+
+    @property
+    def max_mireds(self):
+        return 370  # 2700K    
 
     async def async_turn_on(self, **kwargs):
         """Turn on the light."""
         def turn_on():
             try:
                 if ATTR_BRIGHTNESS in kwargs:
-                    self._brightness = kwargs[ATTR_BRIGHTNESS]                
+                    self._brightness = kwargs[ATTR_BRIGHTNESS]
+                if ATTR_COLOR_TEMP in kwargs:
+                    self._color_temp = kwargs[ATTR_COLOR_TEMP]
                 self._device.set_multiple_values({
                     '20': True,
-                    '22': int(self._brightness * (1000 / 255))
+                    '22': int(self._brightness * (1000 / 255)),
+                    '23': int((self._color_temp - self.min_mireds) * (1000 - 1) / (self.max_mireds - self.min_mireds) + 1)
                 })
                 return True
             except Exception as e:
