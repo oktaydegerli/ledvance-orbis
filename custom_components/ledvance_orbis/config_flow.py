@@ -1,19 +1,17 @@
 from homeassistant import config_entries
 import voluptuous as vol
 
-class TuyaLightConfigFlow(config_entries.ConfigFlow, domain="ledvance_orbis"):
+class LedvanceOrbisConfigFlow(config_entries.ConfigFlow, domain="ledvance_orbis"):
     VERSION = 1
     
     async def async_step_user(self, user_input=None):
         errors = {}
         if user_input is not None:
-            # Kullanıcı girişini doğrula
             return self.async_create_entry(
                 title="Ledvance Orbis",
                 data=user_input
             )
 
-        # Form şemasını tanımla
         data_schema = vol.Schema({
             vol.Required("device_id"): str,
             vol.Required("device_ip"): str,
