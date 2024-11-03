@@ -18,7 +18,7 @@ class LedvanceOrbisConfigFlow(config_entries.ConfigFlow, domain="ledvance_orbis"
                 user_input["local_key"]
             )
             # Cihaz doğrulamasını burada yapabiliriz
-            if device.get_status():
+            if await device.get_status():
                 return self.async_create_entry(title="Ledvance Orbis Device", data=user_input)
             else:
                 return self.async_abort(reason="device_not_found")
