@@ -1,11 +1,10 @@
 {
   "domain": "ledvance_orbis",
   "name": "Ledvance Orbis",
-  "version": "1.0.0",
+  "config_flow": true,
+  "documentation": "",
+  "requirements": ["tinytuya==1.15.1"],
   "dependencies": [],
-  "requirements": [
-    "tinytuya~=1.15.1"
-  ],
   "codeowners": ["@oktaydegerli"],
-  "config_flow": true
+  "version": "1.0.0"
 }

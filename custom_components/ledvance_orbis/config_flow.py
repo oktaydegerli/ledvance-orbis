@@ -1,26 +1,27 @@
-import voluptuous as vol
 from homeassistant import config_entries
-import homeassistant.helpers.config_validation as cv
-from .ledvance_device import LedvanceOrbisDevice
+import voluptuous as vol
 
-DATA_SCHEMA = vol.Schema({
-    vol.Required("device_id"): str,
-    vol.Required("ip"): str,
-    vol.Required("local_key"): str
-})
-
-class LedvanceOrbisConfigFlow(config_entries.ConfigFlow, domain="ledvance_orbis"):
+class TuyaLightConfigFlow(config_entries.ConfigFlow, domain="ledvance_orbis"):
+    VERSION = 1
+    
     async def async_step_user(self, user_input=None):
+        errors = {}
         if user_input is not None:
-            device = LedvanceOrbisDevice(
-                user_input["device_id"],
-                user_input["ip"],
-                user_input["local_key"]
+            # Kullanıcı girişini doğrula
+            return self.async_create_entry(
+                title="Ledvance Orbis",
+                data=user_input
             )
-            # Cihaz doğrulamasını burada yapabiliriz
-            if await device.get_status():
-                return self.async_create_entry(title="Ledvance Orbis Device", data=user_input)
-            else:
-                return self.async_abort(reason="device_not_found")
 
-        return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
+        # Form şemasını tanımla
+        data_schema = vol.Schema({
+            vol.Required("device_id"): str,
+            vol.Required("device_ip"): str,
+            vol.Required("local_key"): str,
+        })
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=data_schema,
+            errors=errors
+        )

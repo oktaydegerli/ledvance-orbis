@@ -1,25 +1,11 @@
-import logging
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 
-DOMAIN = "ledvance_orbis"
-_LOGGER = logging.getLogger(__name__)
-
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Bileşeni başlatır."""
-    _LOGGER.info("Ledvance Orbis bileşeni başlatıldı")
-    hass.data[DOMAIN] = {}
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "light")
+    )
     return True
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Config flow ile eklenen bileşenleri ayarlar."""
-    hass.data[DOMAIN][entry.entry_id] = entry.data
-    _LOGGER.info("Ledvance Orbis cihazı eklendi: %s", entry.data)
-    return True
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Config flow ile eklenen bileşen kaldırıldığında çalışır."""
-    if entry.entry_id in hass.data[DOMAIN]:
-        hass.data[DOMAIN].pop(entry.entry_id)
-    _LOGGER.info("Ledvance Orbis cihazı kaldırıldı: %s", entry.data)
-    return True
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    return await hass.config_entries.async_unload_platforms(entry, ["light"])
