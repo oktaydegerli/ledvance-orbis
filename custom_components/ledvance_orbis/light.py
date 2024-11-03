@@ -1,3 +1,8 @@
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    LightEntity,
+)
+
 from homeassistant.components.light import LightEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -26,6 +31,7 @@ class LedvanceOrbis(LightEntity):
         self._device_ip = device_ip
         self._local_key = local_key
         self._is_on = False
+        self._brightness = 0
         self._name = "Ledvance Orbis"
         self._unique_id = f"ledvance_orbis_{device_id}"
         self._device = None
@@ -57,13 +63,20 @@ class LedvanceOrbis(LightEntity):
     def is_on(self):
         """Return true if light is on."""
         return self._is_on
+    
+    @property
+    def brightness(self):
+        return self._brightness
 
     async def async_turn_on(self, **kwargs):
         """Turn on the light."""
         def turn_on():
             try:
+                if ATTR_BRIGHTNESS in kwargs:
+                    self._brightness = kwargs[ATTR_BRIGHTNESS]                
                 self._device.set_multiple_values({
-                    '20': True
+                    '20': True,
+                    '22': int(self._brightness * 10.23)
                 })
                 return True
             except Exception as e:
@@ -101,3 +114,4 @@ class LedvanceOrbis(LightEntity):
         status = await self.hass.async_add_executor_job(get_status)
         if status is not None:
             self._is_on = status.get('dps', {}).get('20', False)
+            self._brightness = status.get('dps', {}).get('22', 0)
