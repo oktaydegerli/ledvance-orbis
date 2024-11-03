@@ -26,7 +26,7 @@ class LedvanceOrbis(LightEntity):
         self._device_ip = device_ip
         self._local_key = local_key
         self._is_on = False
-        self._brightness = 255
+        self._brightness = 0
         self._name = "Ledvance Orbis"
         self._unique_id = f"ledvance_orbis_{device_id}"
         self._device = None
@@ -58,7 +58,7 @@ class LedvanceOrbis(LightEntity):
     def is_on(self):
         """Return true if light is on."""
         return self._is_on
-    
+
     @property
     def brightness(self):
         """Return the brightness of the light."""
@@ -67,17 +67,22 @@ class LedvanceOrbis(LightEntity):
     @property
     def supported_features(self):
         """Flag supported features."""
-        return SUPPORT_BRIGHTNESS
+        return ATTR_BRIGHTNESS
 
     async def async_turn_on(self, **kwargs):
         """Turn on the light."""
+        brightness = kwargs.get(ATTR_BRIGHTNESS)
+        if brightness is not None:
+            brightness = max(1, min(brightness, 255))
+            dps_brightness = int(brightness / 255 * 1000)
+        else:
+            dps_brightness = None
+
         def turn_on():
             try:
                 values = {'20': True}
-                if ATTR_BRIGHTNESS in kwargs:
-                    brightness = kwargs[ATTR_BRIGHTNESS]
-                    tuya_brightness = int((brightness / 255) * 1000)
-                    values['22'] = tuya_brightness
+                if dps_brightness is not None:
+                    values['22'] = dps_brightness
                 self._device.set_multiple_values(values)
                 return True
             except Exception as e:
@@ -86,8 +91,8 @@ class LedvanceOrbis(LightEntity):
         success = await self.hass.async_add_executor_job(turn_on)
         if success:
             self._is_on = True
-            if ATTR_BRIGHTNESS in kwargs:
-                self._brightness = kwargs[ATTR_BRIGHTNESS]
+            if brightness is not None:
+                self._brightness = brightness
             self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
@@ -108,4 +113,14 @@ class LedvanceOrbis(LightEntity):
 
     async def async_update(self):
         """Fetch new state data for this light."""
-        def get
+        def get_status():
+            try:
+                return self._device.status()
+            except Exception:
+                return None
+
+        status = await self.hass.async_add_executor_job(get_status)
+        if status is not None:
+            self._is_on = status.get('dps', {}).get('20', False)
+            brightness = status.get('dps', {}).get('22', 0)
+            self._brightness = int(brightness / 1000 * 255)

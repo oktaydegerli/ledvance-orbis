@@ -1,3 +1,5 @@
+# __init__.py dosyasının içeriği:
+
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 

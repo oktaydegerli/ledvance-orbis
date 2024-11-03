@@ -1,3 +1,5 @@
+#config_flow.py dosyasının içeriği:
+
 from homeassistant import config_entries
 import voluptuous as vol
 
