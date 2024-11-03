@@ -119,4 +119,4 @@ class LedvanceOrbis(LightEntity):
         status = await self.hass.async_add_executor_job(get_status)
         if status is not None:
             self._is_on = status.get('dps', {}).get('20', False)
-            self._brightness = int(status.get('dps', {}).get('22', 1) / (1000 / 255))
+            # self._brightness = int(status.get('dps', {}).get('22', 1) / (1000 / 255))
