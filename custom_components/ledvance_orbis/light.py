@@ -10,6 +10,7 @@ from homeassistant.components.light import LightEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+import homeassistant.util.color as color_util
 import tinytuya
 from functools import partial
 import asyncio
@@ -33,9 +34,13 @@ class LedvanceOrbis(LightEntity):
         self._device_id = device_id
         self._device_ip = device_ip
         self._local_key = local_key
-        self._is_on = False
-        self._brightness = 0
-        self._color_temp = 0
+        
+        self._states = {}
+
+        self._upper_color_temp = 1000
+        self._max_mired = color_util.color_temperature_kelvin_to_mired(2700)
+        self._min_mired = color_util.color_temperature_kelvin_to_mired(6500)
+
         self._name = "Ledvance Orbis"
         self._unique_id = f"ledvance_orbis_{device_id}"
         self._device = None
@@ -69,76 +74,47 @@ class LedvanceOrbis(LightEntity):
 
     @property
     def is_on(self):
-        """Return true if light is on."""
-        return self._is_on
+        if self._states['20'] == True:
+            return True
+        return False
     
     @property
     def brightness(self):
-        return self._brightness
+        if self._states['22'] > 0:
+            return self._states['22']
+        return None
     
     @property
-    def color_temp_kelvin(self):
-        return self._color_temp
+    def color_temp(self):
+        if self._states['23'] > 0:
+            return int(self._max_mired - (((self._max_mired - self._min_mired) / self._upper_color_temp) * self._states['23']))
+        return None
 
     @property
-    def min_color_temp_kelvin(self):
-        return 2700
+    def min_mireds(self):
+        return self._min_mired
 
     @property
-    def max_color_temp_kelvin(self):
-        return 6500
-    
-    def _kelvin_to_dps(kelvin):
-        kelvin = max(2700, min(kelvin, 6500))
-        dps = 1 + (kelvin - 2700) * (1000 - 1) / (6500 - 2700)
-        return int(dps)
+    def max_mireds(self):
+        return self._max_mired
 
     async def async_turn_on(self, **kwargs):
-        """Turn on the light."""
-        def turn_on():
-            try:
-                if ATTR_BRIGHTNESS in kwargs:
-                    self._brightness = kwargs[ATTR_BRIGHTNESS]
-                if ATTR_COLOR_TEMP in kwargs:
-                    self._color_temp = kwargs[ATTR_COLOR_TEMP]
-                self._device.set_multiple_values({
-                    '20': True,
-                    '22': int(self._brightness * (1000 / 255)),
-                    '23': self._kelvin_to_dps(self._color_temp)
-                })
-                return True
-            except Exception as e:
-                return False
-
-        success = await self.hass.async_add_executor_job(turn_on)
-        if success:
-            self._is_on = True
-            self.async_write_ha_state()
+        self._states['20'] = True
+        if ATTR_BRIGHTNESS in kwargs:
+            self._states['22'] = kwargs[ATTR_BRIGHTNESS]
+        else:
+            self._states['22'] = 1000
+        if ATTR_COLOR_TEMP in kwargs:
+            mired = int(kwargs[ATTR_COLOR_TEMP])
+            if mired < self._min_mired:
+                mired = self._min_mired
+            elif mired > self._max_mired:
+                mired = self._max_mired
+            self._states['23'] = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
+        else:
+            self._states['23'] = 1000
+        self._device.set_multiple_values(self._states)
 
     async def async_turn_off(self, **kwargs):
-        """Turn off the light."""
-        def turn_off():
-            try:
-                self._device.set_multiple_values({
-                    '20': False
-                })
-                return True
-            except Exception as e:
-                return False
-
-        success = await self.hass.async_add_executor_job(turn_off)
-        if success:
-            self._is_on = False
-            self.async_write_ha_state()
-
-    async def async_update(self):
-        """Fetch new state data for this light."""
-        def get_status():
-            try:
-                return self._device.status()
-            except Exception:
-                return None
-
-        status = await self.hass.async_add_executor_job(get_status)
-        if status is not None:
-            self._is_on = status.get('dps', {}).get('20', False)
+        self._states['20'] = False
+        self._device.set_multiple_values(self._states)
