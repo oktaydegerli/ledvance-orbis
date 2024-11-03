@@ -35,7 +35,7 @@ class LedvanceOrbis(LightEntity):
         self._local_key = local_key
         self._is_on = False
         self._brightness = 0
-        self._color_temp = 1
+        self._color_temp = 0
         self._name = "Ledvance Orbis"
         self._unique_id = f"ledvance_orbis_{device_id}"
         self._device = None
@@ -80,14 +80,6 @@ class LedvanceOrbis(LightEntity):
     def color_temp(self):
         return self._color_temp
 
-    @property
-    def min_mireds(self):
-        return 153  # 6500K
-
-    @property
-    def max_mireds(self):
-        return 370  # 2700K    
-
     async def async_turn_on(self, **kwargs):
         """Turn on the light."""
         def turn_on():
@@ -99,7 +91,7 @@ class LedvanceOrbis(LightEntity):
                 self._device.set_multiple_values({
                     '20': True,
                     '22': int(self._brightness * (1000 / 255)),
-                    '23': int((self._color_temp - self.min_mireds) * (1000 - 1) / (self.max_mireds - self.min_mireds) + 1)
+                    '23': int(1000 - (self._color_temp - 2700) * 1000 / 3800)
                 })
                 return True
             except Exception as e:
@@ -137,4 +129,3 @@ class LedvanceOrbis(LightEntity):
         status = await self.hass.async_add_executor_job(get_status)
         if status is not None:
             self._is_on = status.get('dps', {}).get('20', False)
-            # self._brightness = int(status.get('dps', {}).get('22', 1) / (1000 / 255))
