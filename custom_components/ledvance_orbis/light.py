@@ -128,7 +128,7 @@ class LedvanceOrbis(LightEntity):
     async def async_turn_off(self, **kwargs):
         def turn_off():
             try:
-                self.is_on = False
+                self._is_on = False
                 self._device.set_multiple_values({
                     '20': self._is_on
                 })
