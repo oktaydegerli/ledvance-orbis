@@ -84,6 +84,7 @@ class LedvanceOrbis(LightEntity):
     def is_on(self):
         return self._is_on
 
+    @property
     def brightness(self):
         return map_range(self._brightness, self._lower_brightness, self._upper_brightness, 0, 255)
     
