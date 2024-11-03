@@ -18,4 +18,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Config flow ile eklenen bileşen kaldır"""
+    """Config flow ile eklenen bileşen kaldırıldığında çalışır."""
+    if entry.entry_id in hass.data[DOMAIN]:
+        hass.data[DOMAIN].pop(entry.entry_id)
+    _LOGGER.info("Ledvance Orbis cihazı kaldırıldı: %s", entry.data)
+    return True
