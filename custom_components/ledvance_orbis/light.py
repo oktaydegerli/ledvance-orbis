@@ -1,5 +1,6 @@
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    SUPPORT_BRIGHTNESS,
     LightEntity,
 )
 
@@ -58,6 +59,10 @@ class LedvanceOrbis(LightEntity):
     def unique_id(self):
         """Return the unique ID of this light."""
         return self._unique_id
+
+    @property
+    def supported_features(self):
+        return SUPPORT_BRIGHTNESS
 
     @property
     def is_on(self):
