@@ -81,7 +81,7 @@ class LedvanceOrbis(LightEntity):
                     self._brightness = kwargs[ATTR_BRIGHTNESS]                
                 self._device.set_multiple_values({
                     '20': True,
-                    '22': int(self._brightness * 10.23)
+                    '22': int(self._brightness * (1000 / 255))
                 })
                 return True
             except Exception as e:
@@ -119,4 +119,4 @@ class LedvanceOrbis(LightEntity):
         status = await self.hass.async_add_executor_job(get_status)
         if status is not None:
             self._is_on = status.get('dps', {}).get('20', False)
-            self._brightness = status.get('dps', {}).get('22', 0)
+            self._brightness = int(status.get('dps', {}).get('22', 1) / (1000 / 255))
