@@ -100,54 +100,42 @@ class LedvanceOrbis(LightEntity):
         return self._max_mired
 
     async def async_turn_on(self, **kwargs):
-        states = {'20': True}
         def turn_on():
             try:
+                self._is_on = True
                 if ATTR_BRIGHTNESS in kwargs:
-                    states['22'] = kwargs[ATTR_BRIGHTNESS]
-                else:
-                    states['22'] = 1000
+                    self._brightness = kwargs[ATTR_BRIGHTNESS]
                 if ATTR_COLOR_TEMP in kwargs:
                     mired = int(kwargs[ATTR_COLOR_TEMP])
                     if mired < self._min_mired:
                         mired = self._min_mired
                     elif mired > self._max_mired:
                         mired = self._max_mired
-                    states['23'] = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
-                else:
-                    states['23'] = 1000
-                self._device.set_multiple_values(states)
+                    self._color_temp = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
+                self._device.set_multiple_values({
+                    '20': self._is_on,
+                    '22': self._brightness,
+                    '23': self._color_temp
+                })
                 return True
             except Exception as e:
                 return False
             
         success = await self.hass.async_add_executor_job(turn_on)
         if success:
-            self._is_on = states['20']
-            self._brightness = states['22']
-            self._color_temp = states['23']
             self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
             def turn_off():
                 try:
-                    self._device.set_multiple_values({'20': False})
+                    self.is_on = False
+                    self._device.set_multiple_values({
+                        '20': self._is_on
+                    })
                     return True
                 except Exception as e:
                     return False
 
             success = await self.hass.async_add_executor_job(turn_off)
             if success:
-                self._is_on = False
                 self.async_write_ha_state()
-
-    async def async_update(self):
-            def get_status():
-                try:
-                    return self._device.status()
-                except Exception:
-                    return None
-
-            status = await self.hass.async_add_executor_job(get_status)
-            if status is not None:
-                self._is_on = status.get('dps', {}).get('20', False)
