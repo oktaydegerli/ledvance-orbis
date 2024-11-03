@@ -126,16 +126,28 @@ class LedvanceOrbis(LightEntity):
             self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
-            def turn_off():
-                try:
-                    self.is_on = False
-                    self._device.set_multiple_values({
-                        '20': self._is_on
-                    })
-                    return True
-                except Exception as e:
-                    return False
+        def turn_off():
+            try:
+                self.is_on = False
+                self._device.set_multiple_values({
+                    '20': self._is_on
+                })
+                return True
+            except Exception as e:
+                return False
 
-            success = await self.hass.async_add_executor_job(turn_off)
-            if success:
-                self.async_write_ha_state()
+        success = await self.hass.async_add_executor_job(turn_off)
+        if success:
+            self.async_write_ha_state()
+
+    async def async_update(self):
+        """Fetch new state data for this light."""
+        def get_status():
+            try:
+                return self._device.status()
+            except Exception:
+                return None
+
+        status = await self.hass.async_add_executor_job(get_status)
+        if status is not None:
+            self._is_on = status.get('dps', {}).get('20', False)
