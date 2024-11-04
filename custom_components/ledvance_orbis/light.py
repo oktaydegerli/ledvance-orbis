@@ -261,7 +261,7 @@ class LedvanceOrbis(LightEntity):
                     states['24'] = self._color
 
                 if self._effect is not None and not self.is_white_mode:
-                    states['25'] = self._effect
+                    states['36'] = self._effect
 
                 _LOGGER.exception("JSON states: %s", json.dumps(states))
 
