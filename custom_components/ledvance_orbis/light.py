@@ -244,6 +244,8 @@ class LedvanceOrbis(LightEntity):
                     if brightness is None:
                         brightness = self._brightness
                     self._hs = kwargs[ATTR_HS_COLOR]
+                    _LOGGER.exception("hs color string: %s", self._hs)
+
                     if self._hs[1] == 0:
                         self._color_mode = MODE_WHITE
                         self._brightness = brightness
@@ -299,8 +301,6 @@ class LedvanceOrbis(LightEntity):
 
                 if self._effect is not None:
                     states['25'] = self._effect
-
-                _LOGGER.exception("JSON string: %s", json.dumps(states))           
 
                 self._device.set_multiple_values(states)
 
