@@ -208,20 +208,18 @@ class LedvanceOrbis(LightEntity):
                 self._color_temp = self._upper_color_temp
             if self._color_mode is None:
                 self._color_mode = MODE_WHITE
+            self._effect = None
             try:
                 _LOGGER.exception("kwargs: %s", kwargs)
                 if not self.is_on:
                     self._state = True
+
                 if ATTR_EFFECT in kwargs:
-                    scene = self._scenes.get(kwargs[ATTR_EFFECT])
-                    if scene is not None:
-                        if scene.startswith(MODE_SCENE):
-                            self._color_mode = scene
-                        else:
-                            self._color_mode = MODE_SCENE
-                            self._effect = scene
-                    elif kwargs[ATTR_EFFECT] == SCENE_MUSIC:
-                        self._color_mode = MODE_MUSIC
+                    if kwargs[ATTR_EFFECT] == SCENE_MUSIC:
+                        self._color_mode = "music"
+                    else:
+                        self._color_mode = "scene"
+                        self._effect = self._scenes.get(kwargs[ATTR_EFFECT])
 
                 if ATTR_BRIGHTNESS in kwargs:
                     self._brightness = map_range(int(kwargs[ATTR_BRIGHTNESS]), 0, 255, self._lower_brightness, self._upper_brightness)
@@ -257,10 +255,10 @@ class LedvanceOrbis(LightEntity):
                 if self._color_temp is not None and self.is_white_mode:
                     states['23'] = self._color_temp
 
-                if self._color is not None and not self.is_white_mode:
+                if self._color is not None and self.is_color_mode:
                     states['24'] = self._color
 
-                if self._effect is not None and not self.is_white_mode:
+                if self._effect is not None:
                     states['36'] = self._effect
 
                 _LOGGER.exception("JSON states: %s", json.dumps(states))
