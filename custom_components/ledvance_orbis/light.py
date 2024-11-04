@@ -10,6 +10,8 @@ from homeassistant.components.light import (
     LightEntity,
 )
 
+import logging
+import json
 from homeassistant.components.light import LightEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -18,17 +20,6 @@ import homeassistant.util.color as color_util
 import tinytuya
 from functools import partial
 import asyncio
-
-CONF_BRIGHTNESS_LOWER = 29
-DEFAULT_LOWER_BRIGHTNESS = 29
-CONF_BRIGHTNESS_UPPER = 1000
-DEFAULT_UPPER_BRIGHTNESS = 1000
-CONF_COLOR_TEMP_MIN_KELVIN = 2700
-DEFAULT_MIN_KELVIN = 2700
-CONF_COLOR_TEMP_MAX_KELVIN = 6500
-DEFAULT_MAX_KELVIN = 6500
-CONF_COLOR_TEMP_REVERSE = False
-DEFAULT_COLOR_TEMP_REVERSE = False
 
 MODE_COLOR = "colour"
 MODE_MUSIC = "music"
@@ -71,6 +62,8 @@ SCENE_LIST_RGB_1000 = {
     "Music": "07464602000003e803e800000000464602007803e803e80000000046460200f003e803e8" + "00000000464602003d03e803e80000000046460200ae03e803e800000000464602011303e803e80" + "0000000",
 }
 
+_LOGGER = logging.getLogger(__name__)
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -100,12 +93,12 @@ class LedvanceOrbis(LightEntity):
         self._color_temp = None
         self._color_mode = None
         self._color = None
-        self._lower_brightness = CONF_BRIGHTNESS_LOWER
-        self._upper_brightness = CONF_BRIGHTNESS_UPPER
+        self._lower_brightness = 29
+        self._upper_brightness = 1000
         self._upper_color_temp = self._upper_brightness
-        self._max_mired = color_util.color_temperature_kelvin_to_mired(CONF_COLOR_TEMP_MIN_KELVIN)
-        self._min_mired = color_util.color_temperature_kelvin_to_mired(CONF_COLOR_TEMP_MAX_KELVIN)
-        self._color_temp_reverse = CONF_COLOR_TEMP_REVERSE
+        self._max_mired = color_util.color_temperature_kelvin_to_mired(2700)
+        self._min_mired = color_util.color_temperature_kelvin_to_mired(6500)
+        self._color_temp_reverse = False
 
         self._hs = None
         self._effect = None
@@ -292,7 +285,9 @@ class LedvanceOrbis(LightEntity):
                     states['24'] = self._color
 
                 if self._effect is not None:
-                    states['25'] = self._effect                    
+                    states['25'] = self._effect
+
+                _LOGGER.exception("JSON string: %s", json.dumps(states))           
 
                 self._device.set_multiple_values(states)
 
