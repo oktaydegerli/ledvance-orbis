@@ -211,7 +211,9 @@ class LedvanceOrbis(LightEntity):
             if self._brightness is None:
                 self._brightness = self._upper_brightness
             if self._color_temp is None:
-                self._color_temp = self._upper_color_temp                
+                self._color_temp = self._upper_color_temp
+            if self._color_mode is None:
+                self._color_mode = MODE_WHITE
             try:
                 _LOGGER.exception("kwargs: %s", kwargs)
                 if not self.is_on:
@@ -236,7 +238,6 @@ class LedvanceOrbis(LightEntity):
                         color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
-                        self._brightness = None
                         self._color_temp = None
 
                 if ATTR_HS_COLOR in kwargs:
@@ -250,7 +251,6 @@ class LedvanceOrbis(LightEntity):
                         color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
-                        self._brightness = None
                         self._color_temp = None
 
                 if ATTR_COLOR_TEMP in kwargs:
@@ -268,18 +268,6 @@ class LedvanceOrbis(LightEntity):
                     self._brightness = brightness
                     self._color_temp = color_temp
 
-                # if self._color is not None and not self.is_white_mode:
-                #    if self.__is_color_rgb_encoded():
-                #        hue = int(color[6:10], 16)
-                #        sat = int(color[10:12], 16)
-                #        value = int(color[12:14], 16)
-                #        self._hs = [hue, (sat * 100 / 255)]
-                #        self._brightness = value
-                #    else:
-                #        hue, sat, value = [int(value, 16) for value in textwrap.wrap(color, 4)]
-                #        self._hs = [hue, sat / 10.0]
-                #        self._brightness = value
-
                 states = {'20': True}
 
                 if self._color_mode is not None:
@@ -288,7 +276,7 @@ class LedvanceOrbis(LightEntity):
                 if self._brightness is not None:
                     states['22'] = self._brightness
 
-                if self._color_temp is not None:
+                if self._color_temp is not None and self._color_mode is MODE_WHITE:
                     states['23'] = self._color_temp
 
                 if self._color is not None:
