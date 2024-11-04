@@ -105,7 +105,7 @@ class LedvanceOrbis(LightEntity):
             try:
                 self._is_on = True
                 if ATTR_BRIGHTNESS in kwargs:
-                    self._brightness = kwargs[ATTR_BRIGHTNESS]
+                    self._brightness = map_range(int(kwargs[ATTR_BRIGHTNESS]), 0, 255, self._lower_brightness, self._upper_brightness)
                 if ATTR_COLOR_TEMP in kwargs:
                     mired = int(kwargs[ATTR_COLOR_TEMP])
                     if mired < self._min_mired:
