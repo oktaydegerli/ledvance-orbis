@@ -99,7 +99,6 @@ class LedvanceOrbis(LightEntity):
         self._upper_color_temp = self._upper_brightness
         self._max_mired = color_util.color_temperature_kelvin_to_mired(2700)
         self._min_mired = color_util.color_temperature_kelvin_to_mired(6500)
-        self._color_temp_reverse = False
 
         self._hs = None
         self._effect = None
@@ -146,12 +145,7 @@ class LedvanceOrbis(LightEntity):
     @property
     def color_temp(self):
         if self.is_white_mode:
-            color_temp_value = (
-                self._upper_color_temp - self._color_temp
-                if self._color_temp_reverse
-                else self._color_temp
-            )
-            return int(self._max_mired - (((self._max_mired - self._min_mired) / self._upper_color_temp) * color_temp_value))
+            return int(self._max_mired - (((self._max_mired - self._min_mired) / self._upper_color_temp) * self._color_temp))
         return None
     
     @property
@@ -218,7 +212,6 @@ class LedvanceOrbis(LightEntity):
                 _LOGGER.exception("kwargs: %s", kwargs)
                 if not self.is_on:
                     self._state = True
-                brightness = None
                 if ATTR_EFFECT in kwargs:
                     scene = self._scenes.get(kwargs[ATTR_EFFECT])
                     if scene is not None:
@@ -231,58 +224,43 @@ class LedvanceOrbis(LightEntity):
                         self._color_mode = MODE_MUSIC
 
                 if ATTR_BRIGHTNESS in kwargs:
-                    brightness = map_range(int(kwargs[ATTR_BRIGHTNESS]), 0, 255, self._lower_brightness, self._upper_brightness,)
-                    if self.is_white_mode:
-                        self._brightness = brightness
-                    else:
-                        color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
-                        self._color = color
+                    self._brightness = map_range(int(kwargs[ATTR_BRIGHTNESS]), 0, 255, self._lower_brightness, self._upper_brightness)
+                    if not self.is_white_mode:
+                        self._color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), self._brightness)
                         self._color_mode = MODE_COLOR
-                        self._color_temp = None
 
                 if ATTR_HS_COLOR in kwargs:
-                    if brightness is None:
-                        brightness = self._brightness
                     self._hs = kwargs[ATTR_HS_COLOR]
                     if self._hs[1] == 0:
                         self._color_mode = MODE_WHITE
-                        self._brightness = brightness
                     else:
-                        color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
-                        self._color = color
+                        self._color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), self._brightness)
                         self._color_mode = MODE_COLOR
-                        self._color_temp = None
 
                 if ATTR_COLOR_TEMP in kwargs:
-                    if brightness is None:
-                        brightness = self._brightness
                     mired = int(kwargs[ATTR_COLOR_TEMP])
-                    if self._color_temp_reverse:
-                        mired = self._max_mired - (mired - self._min_mired)
                     if mired < self._min_mired:
                         mired = self._min_mired
                     elif mired > self._max_mired:
                         mired = self._max_mired
-                    color_temp = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
+                    self._color_temp = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
                     self._color_mode = MODE_WHITE
-                    self._brightness = brightness
-                    self._color_temp = color_temp
 
                 states = {'20': True}
 
                 if self._color_mode is not None:
                     states['21'] = self._color_mode
 
-                if self._brightness is not None:
+                if self._brightness is not None and self.is_white_mode:
                     states['22'] = self._brightness
 
-                if self._color_temp is not None and self._color_mode is MODE_WHITE:
+                if self._color_temp is not None and self.is_white_mode:
                     states['23'] = self._color_temp
 
-                if self._color is not None:
+                if self._color is not None and not self.is_white_mode:
                     states['24'] = self._color
 
-                if self._effect is not None:
+                if self._effect is not None and not self.is_white_mode:
                     states['25'] = self._effect
 
                 _LOGGER.exception("JSON states: %s", json.dumps(states))
