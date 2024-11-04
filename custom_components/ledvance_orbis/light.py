@@ -255,7 +255,7 @@ class LedvanceOrbis(LightEntity):
                             color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
-                        _LOGGER.exception("hs color string: %s", self._color)
+                        _LOGGER.exception("self color string: %s", self._color)
 
                 if ATTR_COLOR_TEMP in kwargs and (features & SUPPORT_COLOR_TEMP):
                     if brightness is None:
