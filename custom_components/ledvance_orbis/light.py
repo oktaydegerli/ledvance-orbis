@@ -18,8 +18,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import homeassistant.util.color as color_util
 import tinytuya
-from functools import partial
-import asyncio
+# from functools import partial
+# import textwrap
+# import asyncio
 
 MODE_COLOR = "colour"
 MODE_MUSIC = "music"
@@ -242,16 +243,16 @@ class LedvanceOrbis(LightEntity):
                 if ATTR_HS_COLOR in kwargs and (features & SUPPORT_COLOR):
                     if brightness is None:
                         brightness = self._brightness
-                    hs = kwargs[ATTR_HS_COLOR]
-                    if hs[1] == 0:
+                    self._hs = kwargs[ATTR_HS_COLOR]
+                    if self._hs[1] == 0:
                         self._color_mode = MODE_WHITE
                         self._brightness = brightness
                     else:
                         if self.__is_color_rgb_encoded():
-                            rgb = color_util.color_hsv_to_RGB(hs[0], hs[1], int(brightness * 100 / self._upper_brightness))
-                            color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(hs[0]), round(hs[1] * 255 / 100), brightness)
+                            rgb = color_util.color_hsv_to_RGB(self._hs[0], self._hs[1], int(brightness * 100 / self._upper_brightness))
+                            color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(self._hs[0]), round(self._hs[1] * 255 / 100), brightness)
                         else:
-                            color = "{:04x}{:04x}{:04x}".format(round(hs[0]), round(hs[1] * 10.0), brightness)
+                            color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
 
@@ -269,6 +270,18 @@ class LedvanceOrbis(LightEntity):
                     self._color_mode = MODE_WHITE
                     self._brightness = brightness
                     self._color_temp = color_temp
+
+                # if self._color is not None and not self.is_white_mode:
+                #    if self.__is_color_rgb_encoded():
+                #        hue = int(color[6:10], 16)
+                #        sat = int(color[10:12], 16)
+                #        value = int(color[12:14], 16)
+                #        self._hs = [hue, (sat * 100 / 255)]
+                #        self._brightness = value
+                #    else:
+                #        hue, sat, value = [int(value, 16) for value in textwrap.wrap(color, 4)]
+                #        self._hs = [hue, sat / 10.0]
+                #        self._brightness = value
 
                 states = {'20': True}
 
