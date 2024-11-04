@@ -211,6 +211,7 @@ class LedvanceOrbis(LightEntity):
             if self._brightness is None:
                 self._brightness = self._upper_brightness
             try:
+                _LOGGER.exception("kwargs: %s", kwargs)
                 if not self.is_on:
                     self._state = True
                 brightness = None
