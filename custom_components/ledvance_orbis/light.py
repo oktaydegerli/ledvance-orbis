@@ -198,7 +198,9 @@ class LedvanceOrbis(LightEntity):
         return color_mode is not None and color_mode == MODE_MUSIC
     
     def __is_color_rgb_encoded(self):
-        return len(self._color) > 12
+        if self._color is not None:
+            return len(self._color) > 12
+        return False
     
     def __find_scene_by_scene_data(self, data):
         return next((item for item in self._effect_list if self._scenes.get(item) == data), SCENE_CUSTOM)
