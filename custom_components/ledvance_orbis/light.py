@@ -257,9 +257,13 @@ class LedvanceOrbis(LightEntity):
                         color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                     self._color = color
                     self._color_mode = MODE_COLOR
+                    _LOGGER.exception("color string: %s", color)
+                    _LOGGER.exception("hs color string: %s", self._hs)
+                    _LOGGER.exception("hs0 color string: %s", self._hs[0])
+                    _LOGGER.exception("hs1 color string: %s", self._hs[1])
                     
 
-                if ATTR_COLOR_TEMP in kwargs and (features & SUPPORT_COLOR_TEMP):
+                if ATTR_COLOR_TEMP in kwargs:
                     if brightness is None:
                         brightness = self._brightness
                     mired = int(kwargs[ATTR_COLOR_TEMP])
