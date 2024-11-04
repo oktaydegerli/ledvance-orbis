@@ -246,17 +246,17 @@ class LedvanceOrbis(LightEntity):
                     if brightness is None:
                         brightness = self._brightness
                     self._hs = kwargs[ATTR_HS_COLOR]
-                    #if self._hs[1] == 0:
-                    #    self._color_mode = MODE_WHITE
-                    #    self._brightness = brightness
-                    #else:
-                    if self.__is_color_rgb_encoded():
-                        rgb = color_util.color_hsv_to_RGB(self._hs[0], self._hs[1], int(brightness * 100 / self._upper_brightness))
-                        color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(self._hs[0]), round(self._hs[1] * 255 / 100), brightness)
+                    if self._hs[1] == 0:
+                        self._color_mode = MODE_WHITE
+                        self._brightness = brightness
                     else:
-                        color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
-                    self._color = color
-                    self._color_mode = MODE_COLOR
+                        if self.__is_color_rgb_encoded():
+                            rgb = color_util.color_hsv_to_RGB(self._hs[0], self._hs[1], int(brightness * 100 / self._upper_brightness))
+                            color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(self._hs[0]), round(self._hs[1] * 255 / 100), brightness)
+                        else:
+                            color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
+                        self._color = color
+                        self._color_mode = MODE_COLOR
                     _LOGGER.exception("color string: %s", color)
                     _LOGGER.exception("hs color string: %s", self._hs)
                     _LOGGER.exception("hs0 color string: %s", self._hs[0])
@@ -311,6 +311,7 @@ class LedvanceOrbis(LightEntity):
 
                 return True
             except Exception as e:
+                _LOGGER.exception("Exception: %s", e)
                 return False
             
         success = await self.hass.async_add_executor_job(turn_on)
