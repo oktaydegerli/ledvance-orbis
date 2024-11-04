@@ -174,9 +174,6 @@ class LedvanceOrbis(LightEntity):
         color_mode = self.__get_color_mode()
         return color_mode is not None and color_mode == MODE_MUSIC
     
-    def __find_scene_by_scene_data(self, data):
-        return next((item for item in self._effect_list if self._scenes.get(item) == data), SCENE_CUSTOM)
-    
     def __get_color_mode(self):
         if self._color_mode is None:
             return MODE_WHITE
@@ -201,7 +198,7 @@ class LedvanceOrbis(LightEntity):
                         self._color_mode = "music"
                     else:
                         self._color_mode = "scene"
-                        self._effect = self._scenes.get(kwargs[ATTR_EFFECT])
+                        self._effect = kwargs[ATTR_EFFECT]
 
                 if ATTR_BRIGHTNESS in kwargs:
                     self._brightness = map_range(int(kwargs[ATTR_BRIGHTNESS]), 0, 255, self._lower_brightness, self._upper_brightness)
@@ -241,7 +238,7 @@ class LedvanceOrbis(LightEntity):
                     states['24'] = self._color
 
                 if self._effect is not None:
-                    states['36'] = self._effect
+                    states['36'] = self._scenes.get(kwargs[ATTR_EFFECT])
 
                 self._device.set_multiple_values(states)
 
