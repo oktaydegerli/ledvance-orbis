@@ -211,9 +211,6 @@ class LedvanceOrbis(LightEntity):
             if self._brightness is None:
                 self._brightness = self._upper_brightness
             try:
-                _LOGGER.exception("kwargs: %s", kwargs)
-                _LOGGER.exception("ATTR_HS_COLOR: %s", ATTR_HS_COLOR)
-
                 if not self.is_on:
                     self._state = True
                 brightness = None
@@ -247,12 +244,7 @@ class LedvanceOrbis(LightEntity):
                     else:
                         color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
-                        self._color_mode = MODE_COLOR
-                    _LOGGER.exception("color string: %s", color)
-                    _LOGGER.exception("hs color string: %s", self._hs)
-                    _LOGGER.exception("hs0 color string: %s", self._hs[0])
-                    _LOGGER.exception("hs1 color string: %s", self._hs[1])
-                    
+                        self._color_mode = MODE_COLOR                    
 
                 if ATTR_COLOR_TEMP in kwargs:
                     if brightness is None:
@@ -297,6 +289,8 @@ class LedvanceOrbis(LightEntity):
 
                 if self._effect is not None:
                     states['25'] = self._effect
+
+                _LOGGER.exception("JSON states: %s", json.dumps(states))
 
                 self._device.set_multiple_values(states)
 
