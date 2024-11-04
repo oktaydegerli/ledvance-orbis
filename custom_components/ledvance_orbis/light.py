@@ -34,8 +34,16 @@ SCENE_LIST = {
     "İyi Geceler": "AAABAQIODgAAyAAAAAA=",
     "Okuma Modu": "AAEBAQIODgAD6AH0AAA=",
     "Büyülü Orman": "AAcAAAEDA0tLAgB4AvgCJktLAgAzA+gD6EtLAgB4A+gBhg==",
-    "İş": "AAIBAQIODgAD6APoAAA=",
-    "Eğlence": "AAMBAQIODgAB9AH0AAA="
+    "Renk Modu": "AAQAAAEGA0ZGAQAAA+gD6EZGAQB4A+gD6EZGAQDwA+gD6EZGAQA9A+gD6EZGAQCuA+gD6EZGAQETA+gD6A==",
+    "Sıcak Soğuk Mod": "AAUBAwJGRgED6AAKRkYBA+gBVEZGAQPoA+gAAA=",
+    "Çöl Vahası": "AAgAAAEDA0tLAgAiAUoDNEtLAgAQArID6EtLAgAQA+gD6A==",
+    "Pastel Rüyalar": "AAkAAAEDA0tLAgFLAMgD6EtLAgC0AQQDoktLAgAcAQ4D6A==",
+    "Sonbahar Esintisi": "AAoAAAEDA0tLAgArA1IDUktLAgAAAyoCvEtLAgAnA+gD6A=",
+    "Mistik Sular": "AAsAAAEDA0tLAgDDA+gD6EtLAgCgAfQD6EtLAgDwAwwBuA==",
+    "Narenciye Sıçraması": "AAwAAAEDA0tLAgA8A+gD6EtLAgAnA+gD6EtLAgAQA+gD6A==",
+    "Şehirde Uyanış": "AA0AAAEDA0tLAgAJAtAD6EtLAgAmASID6EtLAgAzA+gD6A==",
+    "Tropikal Alacakaranlık": "AA8AAAEDA0tLAgFKAk4D6EtLAgAnA+gD6EtLAgC0A+gB9A==",
+    "Gökkuşağı": "AB0AAAEGA0tLAgAAA+gD6EtLAgAnA+gD6EtLAgA8A+gD6EtLAgB4A+gD6EtLAgDSA+gD6EtLAgERA+gD6A=="
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,7 +89,7 @@ class LedvanceOrbis(LightEntity):
         self._scenes = None
         self._scenes = SCENE_LIST
         self._effect_list = list(self._scenes.keys())
-        self._effect_list.append(SCENE_MUSIC)
+        # self._effect_list.append(SCENE_MUSIC)
 
         self._name = "Ledvance Orbis"
         self._unique_id = f"ledvance_orbis_{device_id}"
@@ -185,7 +193,6 @@ class LedvanceOrbis(LightEntity):
                 self._color_mode = MODE_WHITE
             self._effect = None
             try:
-                _LOGGER.exception("kwargs: %s", kwargs)
                 if not self.is_on:
                     self._state = True
 
@@ -235,8 +242,6 @@ class LedvanceOrbis(LightEntity):
 
                 if self._effect is not None:
                     states['36'] = self._effect
-
-                _LOGGER.exception("JSON states: %s", json.dumps(states))
 
                 self._device.set_multiple_values(states)
 
