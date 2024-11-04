@@ -211,6 +211,8 @@ class LedvanceOrbis(LightEntity):
 
     async def async_turn_on(self, **kwargs):
         def turn_on():
+            if self._brightness is None:
+                self._brightness = self._upper_brightness
             try:
                 _LOGGER.exception("kwargs: %s", kwargs)
                 _LOGGER.exception("ATTR_HS_COLOR: %s", ATTR_HS_COLOR)
