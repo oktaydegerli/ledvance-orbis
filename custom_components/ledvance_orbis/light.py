@@ -1,8 +1,10 @@
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP,
+    ATTR_HS_COLOR,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR_TEMP,
+    SUPPORT_COLOR,
     LightEntity,
 )
 
@@ -42,6 +44,7 @@ class LedvanceOrbis(LightEntity):
         self._is_on = False
         self._brightness = 1000
         self._color_temp = 1000
+        self._hs = None
 
         self._lower_brightness = 29
         self._upper_brightness = 1000
@@ -78,7 +81,7 @@ class LedvanceOrbis(LightEntity):
 
     @property
     def supported_features(self):
-        return SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP
+        return SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP | SUPPORT_COLOR
 
     @property
     def is_on(self):
@@ -99,6 +102,13 @@ class LedvanceOrbis(LightEntity):
     @property
     def max_mireds(self):
         return self._max_mired
+    
+    @property
+    def hs_color(self):
+        return self._hs
+    
+    # def __is_color_rgb_encoded(self):
+    #    return len(self.dps_conf(24)) > 12
 
     async def async_turn_on(self, **kwargs):
         def turn_on():
@@ -113,10 +123,20 @@ class LedvanceOrbis(LightEntity):
                     elif mired > self._max_mired:
                         mired = self._max_mired
                     self._color_temp = int(self._upper_color_temp - (self._upper_color_temp / (self._max_mired - self._min_mired)) * (mired - self._min_mired))
+                if ATTR_HS_COLOR in kwargs:
+                    self._hs = kwargs[ATTR_HS_COLOR]
+                    color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), self._brightness)
+                    #if self.__is_color_rgb_encoded():
+                    #    rgb = color_util.color_hsv_to_RGB(self._hs[0], self._hs[1], int(self._brightness * 100 / self._upper_brightness))
+                    #    color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(self._hs[0]), round(self._hs[1] * 255 / 100), self._brightness)
+                    #else:
+                    #    color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), self._brightness)
+
                 self._device.set_multiple_values({
                     '20': self._is_on,
                     '22': self._brightness,
-                    '23': self._color_temp
+                    '23': self._color_temp,
+                    '24': color
                 })
                 return True
             except Exception as e:
