@@ -210,6 +210,8 @@ class LedvanceOrbis(LightEntity):
         def turn_on():
             if self._brightness is None:
                 self._brightness = self._upper_brightness
+            if self._color_temp is None:
+                self._color_temp = self._upper_color_temp                
             try:
                 _LOGGER.exception("kwargs: %s", kwargs)
                 if not self.is_on:
@@ -234,6 +236,8 @@ class LedvanceOrbis(LightEntity):
                         color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
+                        self._brightness = None
+                        self._color_temp = None
 
                 if ATTR_HS_COLOR in kwargs:
                     if brightness is None:
@@ -245,7 +249,9 @@ class LedvanceOrbis(LightEntity):
                     else:
                         color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
-                        self._color_mode = MODE_COLOR                    
+                        self._color_mode = MODE_COLOR
+                        self._brightness = None
+                        self._color_temp = None
 
                 if ATTR_COLOR_TEMP in kwargs:
                     if brightness is None:
