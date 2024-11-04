@@ -197,11 +197,6 @@ class LedvanceOrbis(LightEntity):
         color_mode = self.__get_color_mode()
         return color_mode is not None and color_mode == MODE_MUSIC
     
-    def __is_color_rgb_encoded(self):
-        if self._color is not None:
-            return len(self._color) > 12
-        return False
-    
     def __find_scene_by_scene_data(self, data):
         return next((item for item in self._effect_list if self._scenes.get(item) == data), SCENE_CUSTOM)
     
@@ -238,11 +233,7 @@ class LedvanceOrbis(LightEntity):
                     if self.is_white_mode:
                         self._brightness = brightness
                     else:
-                        if self.__is_color_rgb_encoded():
-                            rgb = color_util.color_hsv_to_RGB(self._hs[0], self._hs[1], int(brightness * 100 / self._upper_brightness))
-                            color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(self._hs[0]), round(self._hs[1] * 255 / 100), brightness)
-                        else:
-                            color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
+                        color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
 
@@ -254,11 +245,7 @@ class LedvanceOrbis(LightEntity):
                         self._color_mode = MODE_WHITE
                         self._brightness = brightness
                     else:
-                        if self.__is_color_rgb_encoded():
-                            rgb = color_util.color_hsv_to_RGB(self._hs[0], self._hs[1], int(brightness * 100 / self._upper_brightness))
-                            color = "{:02x}{:02x}{:02x}{:04x}{:02x}{:02x}".format(round(rgb[0]), round(rgb[1]), round(rgb[2]), round(self._hs[0]), round(self._hs[1] * 255 / 100), brightness)
-                        else:
-                            color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
+                        color = "{:04x}{:04x}{:04x}".format(round(self._hs[0]), round(self._hs[1] * 10.0), brightness)
                         self._color = color
                         self._color_mode = MODE_COLOR
                     _LOGGER.exception("color string: %s", color)
