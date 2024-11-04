@@ -212,11 +212,13 @@ class LedvanceOrbis(LightEntity):
     async def async_turn_on(self, **kwargs):
         def turn_on():
             try:
+                _LOGGER.exception("kwargs: %s", kwargs)
+                _LOGGER.exception("ATTR_HS_COLOR: %s", ATTR_HS_COLOR)
+
                 if not self.is_on:
                     self._state = True
-                features = self.supported_features
                 brightness = None
-                if ATTR_EFFECT in kwargs and (features & SUPPORT_EFFECT):
+                if ATTR_EFFECT in kwargs:
                     scene = self._scenes.get(kwargs[ATTR_EFFECT])
                     if scene is not None:
                         if scene.startswith(MODE_SCENE):
@@ -227,7 +229,7 @@ class LedvanceOrbis(LightEntity):
                     elif kwargs[ATTR_EFFECT] == SCENE_MUSIC:
                         self._color_mode = MODE_MUSIC
 
-                if ATTR_BRIGHTNESS in kwargs and (features & SUPPORT_BRIGHTNESS):
+                if ATTR_BRIGHTNESS in kwargs:
                     brightness = map_range(int(kwargs[ATTR_BRIGHTNESS]), 0, 255, self._lower_brightness, self._upper_brightness,)
                     if self.is_white_mode:
                         self._brightness = brightness
@@ -240,14 +242,10 @@ class LedvanceOrbis(LightEntity):
                         self._color = color
                         self._color_mode = MODE_COLOR
 
-                if ATTR_HS_COLOR in kwargs and (features & SUPPORT_COLOR):
+                if ATTR_HS_COLOR in kwargs:
                     if brightness is None:
                         brightness = self._brightness
                     self._hs = kwargs[ATTR_HS_COLOR]
-                    _LOGGER.exception("self color string: %s", self._color)
-                    _LOGGER.exception("hs color string: %s", self._hs)
-                    _LOGGER.exception("hs0 color string: %s", self._hs[0])
-                    _LOGGER.exception("hs1 color string: %s", self._hs[1])
                     #if self._hs[1] == 0:
                     #    self._color_mode = MODE_WHITE
                     #    self._brightness = brightness
